@@ -16,7 +16,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EvFinder">
 
-        <!-- Google Maps API Key inyectada de forma segura desde local.properties por Gradle -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />

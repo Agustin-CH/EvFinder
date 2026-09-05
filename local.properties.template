@@ -1,3 +1,2 @@
-# Copy this file to local.properties and set your local keys
 sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
 MAPS_API_KEY=YOUR_MAPS_API_KEY_HERE
