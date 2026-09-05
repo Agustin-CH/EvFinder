@@ -28,6 +28,7 @@ class MainViewModel(
 ) : ViewModel() {
 
     val currentUser: StateFlow<User> = authRepository.currentUser
+    val favorites: StateFlow<Set<String>> = stationRepository.favoritesFlow
 
     private val _filterState = MutableStateFlow(StationFilter())
     val filterState: StateFlow<StationFilter> = _filterState.asStateFlow()
@@ -47,14 +48,34 @@ class MainViewModel(
     private val _isAuthDialogOpen = MutableStateFlow(false)
     val isAuthDialogOpen: StateFlow<Boolean> = _isAuthDialogOpen.asStateFlow()
 
-    val favorites: StateFlow<Set<String>> = stationRepository.favoritesFlow
-
     val filteredStations: StateFlow<List<ChargingStation>> = combine(
         stationRepository.allStations,
         _filterState
     ) { _, filter ->
         stationRepository.filterStations(filter)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Single unified UI State for Unidirectional Data Flow (UDF)
+    val uiState: StateFlow<MapUiState> = combine(
+        filteredStations,
+        _filterState,
+        _selectedStation,
+        _isFilterSheetOpen,
+        _isAuthDialogOpen,
+        _isLoading,
+        _userMessage
+    ) { flows ->
+        @Suppress("UNCHECKED_CAST")
+        MapUiState(
+            stations = flows[0] as List<ChargingStation>,
+            filter = flows[1] as StationFilter,
+            selectedStation = flows[2] as ChargingStation?,
+            isFilterSheetOpen = flows[3] as Boolean,
+            isAuthDialogOpen = flows[4] as Boolean,
+            isLoading = flows[5] as Boolean,
+            userMessage = flows[6] as String?
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MapUiState())
 
     init {
         viewModelScope.launch {
@@ -118,10 +139,10 @@ class MainViewModel(
         }
     }
 
-    fun login(email: String, pass: String, onSuccess: () -> Unit) {
+    fun login(email: String, pass: String, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             _isLoading.value = true
-            delay(500) // Simulate network latency
+            delay(500)
             _isLoading.value = false
             val result = authRepository.login(email, pass)
             result.onSuccess { user ->
@@ -134,10 +155,10 @@ class MainViewModel(
         }
     }
 
-    fun register(name: String, email: String, pass: String, onSuccess: () -> Unit) {
+    fun register(name: String, email: String, pass: String, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             _isLoading.value = true
-            delay(500) // Simulate network latency
+            delay(500)
             _isLoading.value = false
             val result = authRepository.register(name, email, pass)
             result.onSuccess { user ->
@@ -173,7 +194,6 @@ class MainViewModel(
         try {
             context.startActivity(mapIntent)
         } catch (e: Exception) {
-            // Fallback to general intent without specific package
             val genericIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
             try {
                 context.startActivity(genericIntent)
