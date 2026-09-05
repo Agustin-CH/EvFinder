@@ -16,10 +16,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EvFinder">
 
-        <!-- Google Maps API Key: Reemplaza YOUR_KEY_HERE con tu clave local -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="YOUR_KEY_HERE" />
+            android:value="${MAPS_API_KEY}" />
 
         <activity
             android:name=".MainActivity"
